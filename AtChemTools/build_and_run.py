@@ -2,6 +2,7 @@
 import os
 import subprocess
 import shutil
+import uuid
 import pandas as pd
 import numpy as np
 from .species_from_mechanism import return_all_species
@@ -209,14 +210,15 @@ def run_model(atchem2_path : str, model_path : str = ""):
     os.chdir(script_dir)
 
 def find_unique_dirname(atchem2_path : str):
-    """Creates a unique model sub-directory name based on the current datetime. 
-    This should avoid over-writing existing model sub-directories when running 
-    a new simulation, and give a meaningful model subdirectory name for the 
-    user, if needed."""
+    """Creates a unique model sub-directory name based on the current datetime, 
+    process ID, and a short random component. This should avoid over-writing 
+    existing model sub-directories when running a new simulation, and give a 
+    meaningful model subdirectory name for the user, if needed."""
     
     fmt_dtime = str(datetime.now()).replace(" ", "_").replace(":", "-")
+    unique_id = uuid.uuid4().hex[:8]
 
-    return f"model_{fmt_dtime}"
+    return f"model_{fmt_dtime}_{os.getpid()}_{unique_id}"
                         
 def _write_build_run_injections(injection_df : pd.DataFrame, atchem2_path : str, 
                                 mech_path : str, day : int, 
@@ -646,3 +648,4 @@ def write_build_run(atchem2_path : str, mech_path : str, day : int, month : int,
             shutil.rmtree(new_model_path)
         
         return (output, loss_output, prod_output, env_output, photo_output)
+
