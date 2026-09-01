@@ -1,5 +1,7 @@
 #imports
 import os
+import subprocess
+import shutil
 import pandas as pd
 import numpy as np
 from .species_from_mechanism import return_all_species
@@ -189,7 +191,11 @@ def build_model(atchem2_path : str, mechanism_path : str, model_path : str = "")
     """Builds the specified AtChem2 model, ready for running"""
     script_dir = os.getcwd()
     os.chdir(atchem2_path)
-    os.system(f"{atchem2_path}/build/build_atchem2.sh {mechanism_path} {model_path}/configuration/")
+    subprocess.run(
+        [f"{atchem2_path}/build/build_atchem2.sh", mechanism_path,
+         f"{model_path}/configuration/"],
+        check=True,
+    )
     os.chdir(script_dir)
 
 def run_model(atchem2_path : str, model_path : str = ""):
@@ -197,9 +203,9 @@ def run_model(atchem2_path : str, model_path : str = ""):
     script_dir = os.getcwd()
     os.chdir(atchem2_path)
     if model_path:
-        os.system(f"{atchem2_path}/atchem2 --model={model_path}")
+        subprocess.run([f"{atchem2_path}/atchem2", f"--model={model_path}"], check=True)
     else:
-        os.system(f"{atchem2_path}/atchem2")
+        subprocess.run([f"{atchem2_path}/atchem2"], check=True)
     os.chdir(script_dir)
 
 def find_unique_dirname(atchem2_path : str):
@@ -252,10 +258,10 @@ def _write_build_run_injections(injection_df : pd.DataFrame, atchem2_path : str,
         #copy atchem2 model directory 
         new_model_dir = find_unique_dirname(atchem2_path)
         new_model_path = f"{atchem2_path}/{new_model_dir}"
-        os.system(f"cp -r {atchem2_path}/model {new_model_path}")
+        shutil.copytree(f"{atchem2_path}/model", new_model_path)
         #copy the mechanism to the AtChem directory
         new_mech_path = f"{new_model_path}/{mech_path.split('/')[-1]}"
-        os.system(f"cp {mech_path} {new_mech_path}")
+        shutil.copy(mech_path, new_mech_path)
         
         #write config files using data passed
         write_config(new_model_path, initial_concs=initial_concs, 
@@ -346,7 +352,7 @@ def _write_build_run_injections(injection_df : pd.DataFrame, atchem2_path : str,
     
         #remove model directory (unless requested to keep)
         if not keep_rundirs:
-            os.system(f"rm -r {new_model_path}")
+            shutil.rmtree(new_model_path)
         
     #select only the output speices
     stitched_output = stitched_output[spec_output]
@@ -404,11 +410,11 @@ BUILDING OF MANY INDIVIDUAL MODELS.""")
         #copy atchem2 model directory 
         new_model_dir = find_unique_dirname(atchem2_path)
         new_model_path = f"{atchem2_path}/{new_model_dir}"
-        os.system(f"cp -r {atchem2_path}/model {new_model_path}")
+        shutil.copytree(f"{atchem2_path}/model", new_model_path)
 
         #copy the mechanism to the AtChem directory
         new_mech_path = f"{new_model_path}/{mech_path.split('/')[-1]}"
-        os.system(f"cp {mech_path} {new_mech_path}")
+        shutil.copy(mech_path, new_mech_path)
         
         #write config files using data passed
         write_config(new_model_path, initial_concs=initial_concs, 
@@ -492,7 +498,7 @@ BUILDING OF MANY INDIVIDUAL MODELS.""")
 
         #remove model directory (unless requested to keep)
         if not keep_rundirs:
-            os.system(f"rm -r {new_model_path}")
+            shutil.rmtree(new_model_path)
         
     #select only the output speices
     stitched_output = stitched_output[spec_output]
@@ -593,11 +599,11 @@ def write_build_run(atchem2_path : str, mech_path : str, day : int, month : int,
         #copy atchem2 model directory 
         new_model_dir = find_unique_dirname(atchem2_path)
         new_model_path = f"{atchem2_path}/{new_model_dir}"
-        os.system(f"cp -r {atchem2_path}/model {new_model_path}")
+        shutil.copytree(f"{atchem2_path}/model", new_model_path)
 
         #copy the mechanism to the AtChem directory
         new_mech_path = f"{new_model_path}/{mech_path.split('/')[-1]}"
-        os.system(f"cp {mech_path} {new_mech_path}")
+        shutil.copy(mech_path, new_mech_path)
 
         #write config files using data passed
         write_config(new_model_path, initial_concs=initial_concs, 
@@ -637,7 +643,6 @@ def write_build_run(atchem2_path : str, mech_path : str, day : int, month : int,
         
         #remove model directory (unless requested to keep)
         if not keep_rundirs:
-            os.system(f"rm -r {new_model_path}")
+            shutil.rmtree(new_model_path)
         
         return (output, loss_output, prod_output, env_output, photo_output)
-
